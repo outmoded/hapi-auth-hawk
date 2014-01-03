@@ -467,7 +467,7 @@ describe('Hawk', function () {
         server.inject(request, function (res) {
 
             expect(res.statusCode).to.equal(401);
-            expect(res.result.message).to.equal('Payload is invalid');
+            expect(res.result.message).to.equal('Missing payload authentication');
             done();
         });
     });
