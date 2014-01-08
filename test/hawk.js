@@ -122,10 +122,10 @@ describe('Hawk', function () {
                 { method: 'POST', path: '/hawkOptional', handler: hawkHandler, config: { auth: { mode: 'optional' } } },
                 { method: 'POST', path: '/hawkScope', handler: hawkHandler, config: { auth: { scope: 'x' } } },
                 { method: 'POST', path: '/hawkTos', handler: hawkHandler, config: { auth: { tos: '2.0.0' } } },
-                { method: 'POST', path: '/hawkPayload', handler: hawkHandler, config: { auth: { mode: 'required', payload: 'required' }, payload: 'raw' } },
-                { method: 'POST', path: '/hawkPayloadOptional', handler: hawkHandler, config: { auth: { mode: 'required', payload: 'optional' }, payload: 'raw' } },
-                { method: 'POST', path: '/hawkPayloadNone', handler: hawkHandler, config: { auth: { mode: 'required', payload: false }, payload: 'raw' } },
-                { method: 'POST', path: '/hawkOptionalPayload', handler: hawkHandler, config: { auth: { mode: 'optional', payload: 'required' }, payload: 'raw' } }
+                { method: 'POST', path: '/hawkPayload', handler: hawkHandler, config: { auth: { mode: 'required', payload: 'required' }, payload: { override: 'text/plain' } } },
+                { method: 'POST', path: '/hawkPayloadOptional', handler: hawkHandler, config: { auth: { mode: 'required', payload: 'optional' }, payload: { override: 'text/plain' } } },
+                { method: 'POST', path: '/hawkPayloadNone', handler: hawkHandler, config: { auth: { mode: 'required', payload: false }, payload: { override: 'text/plain' } } },
+                { method: 'POST', path: '/hawkOptionalPayload', handler: hawkHandler, config: { auth: { mode: 'optional', payload: 'required' }, payload: { override: 'text/plain' } } }
             ]);
 
             done();
@@ -330,8 +330,14 @@ describe('Hawk', function () {
     it('returns a reply on successful auth and payload validation', function (done) {
 
         var payload = 'application text formatted payload';
-        var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload, contentType: 'application/text' });
-        var request = { method: 'POST', url: 'http://example.com:8080/hawkPayload', headers: { authorization: authHeader.field, 'content-type': 'application/text' }, payload: payload };
+        var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload, contentType: 'text/plain' });
+        var request = {
+            method: 'POST',
+            url: 'http://example.com:8080/hawkPayload',
+            headers: { authorization: authHeader.field, 'content-type': 'text/plain' },
+            payload: payload,
+            simulate: { split: true }
+        };
 
         server.inject(request, function (res) {
 

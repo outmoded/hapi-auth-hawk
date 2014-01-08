@@ -170,7 +170,7 @@ describe('Bewit', function () {
 
         var fn = function () {
 
-            server.route({ method: 'POST', path: '/bewitPayload', handler: bewitHandler, config: { auth: { mode: 'required', payload: 'required' }, payload: 'raw' } });
+            server.route({ method: 'POST', path: '/bewitPayload', handler: bewitHandler, config: { auth: { mode: 'required', payload: 'required' }, payload: { output: 'stream', parse: false } } });
         };
 
         expect(fn).to.throw(Error);
@@ -181,7 +181,7 @@ describe('Bewit', function () {
 
         var fn = function () {
 
-            server.route({ method: 'POST', path: '/bewitPayload', handler: bewitHandler, config: { auth: { mode: 'required', payload: 'optional' }, payload: 'raw' } });
+            server.route({ method: 'POST', path: '/bewitPayload', handler: bewitHandler, config: { auth: { mode: 'required', payload: 'optional' }, payload: { output: 'stream', parse: false } } });
         };
 
         expect(fn).to.throw(Error);
@@ -192,7 +192,7 @@ describe('Bewit', function () {
 
         var fn = function () {
 
-            server.route({ method: 'POST', path: '/bewitPayload', handler: bewitHandler, config: { auth: { mode: 'required', payload: false }, payload: 'raw' } });
+            server.route({ method: 'POST', path: '/bewitPayload', handler: bewitHandler, config: { auth: { mode: 'required', payload: false }, payload: { output: 'stream', parse: false } } });
         };
 
         expect(fn).to.not.throw(Error);
