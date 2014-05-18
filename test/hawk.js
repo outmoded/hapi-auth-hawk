@@ -293,7 +293,7 @@ describe('Hawk', function () {
 
     it('returns an error on insufficient scope', function (done) {
 
-        var request = { method: 'POST', url: 'http://example.com:8080/hawkScope', headers: { authorization: hawkHeader('john', '/hawkScope').field } };
+        var request = { method: 'POST', url: 'http://example.com:8080/hawkScope', payload: 'something', headers: { authorization: hawkHeader('john', '/hawkScope').field } };
 
         server.inject(request, function (res) {
 
