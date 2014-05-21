@@ -4,6 +4,8 @@ var Stream = require('stream');
 var Lab = require('lab');
 var Hapi = require('hapi');
 var Hawk = require('hawk');
+var Boom = require('boom');
+var Hoek = require('hoek');
 
 
 // Declare internals
@@ -31,7 +33,7 @@ describe('Hawk', function () {
             }
         },
         'jane': {
-            err: Hapi.error.internal('boom')
+            err: Boom.internal('boom')
         },
         'joan': {
             cred: {
@@ -79,7 +81,7 @@ describe('Hawk', function () {
             Stream.Readable.call(this);
         };
 
-        Hapi.utils.inherits(TestStream, Stream.Readable);
+        Hoek.inherits(TestStream, Stream.Readable);
 
         TestStream.prototype._read = function (size) {
 
