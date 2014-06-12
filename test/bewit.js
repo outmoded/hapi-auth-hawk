@@ -62,17 +62,17 @@ describe('Bewit', function () {
     var server = new Hapi.Server();
     before(function (done) {
 
-        server.pack.require('../', function (err) {
+        server.pack.register(require('../'), function (err) {
 
             expect(err).to.not.exist;
 
-            server.auth.strategy('default', 'bewit', { getCredentialsFunc: getCredentials })
+            server.auth.strategy('default', 'bewit', true, { getCredentialsFunc: getCredentials });
 
             server.route([
-                { method: 'GET', path: '/bewit', handler: bewitHandler, config: { auth: true } },
-                { method: 'GET', path: '/bewitOptional', handler: bewitHandler, config: { auth: { mode: 'optional' } } },
-                { method: 'GET', path: '/bewitScope', handler: bewitHandler, config: { auth: { scope: 'x' } } },
-                { method: 'GET', path: '/bewitTos', handler: bewitHandler, config: { auth: { tos: '2.0.0' } } }
+                { method: 'GET', path: '/bewit', handler: bewitHandler, config: { auth: 'default' } },
+                { method: 'GET', path: '/bewitOptional', handler: bewitHandler, config: { auth: { mode: 'optional', strategy: 'default' } } },
+                { method: 'GET', path: '/bewitScope', handler: bewitHandler, config: { auth: { scope: 'x', strategy: 'default' } } },
+                { method: 'GET', path: '/bewitTos', handler: bewitHandler, config: { auth: { tos: '2.0.0', strategy: 'default' } } }
             ]);
 
             done();
@@ -144,7 +144,7 @@ describe('Bewit', function () {
         var request = { method: 'GET', url: '/bewit?bewit=' + bewit, headers: { custom: 'example.com:8080' } };
 
         var server = new Hapi.Server();
-        server.pack.require('../', function (err) {
+        server.pack.register(require('../'), function (err) {
 
             expect(err).to.not.exist;
 
@@ -155,7 +155,7 @@ describe('Bewit', function () {
                 }
             });
 
-            server.route({ method: 'GET', path: '/bewit', handler: bewitHandler, config: { auth: true } });
+            server.route({ method: 'GET', path: '/bewit', handler: bewitHandler, config: { auth: 'default' } });
 
             server.inject(request, function (res) {
 
@@ -170,7 +170,12 @@ describe('Bewit', function () {
 
         var fn = function () {
 
-            server.route({ method: 'POST', path: '/bewitPayload', handler: bewitHandler, config: { auth: { mode: 'required', payload: 'required' }, payload: { output: 'stream', parse: false } } });
+            server.route({ method: 'POST',
+                path: '/bewitPayload',
+                handler: bewitHandler,
+                config: { auth: { mode: 'required', strategy: 'default', payload: 'required' },
+                    payload: { output: 'stream', parse: false } }
+            });
         };
 
         expect(fn).to.throw(Error);
@@ -181,7 +186,12 @@ describe('Bewit', function () {
 
         var fn = function () {
 
-            server.route({ method: 'POST', path: '/bewitPayload', handler: bewitHandler, config: { auth: { mode: 'required', payload: 'optional' }, payload: { output: 'stream', parse: false } } });
+            server.route({ method: 'POST',
+                path: '/bewitPayload',
+                handler: bewitHandler,
+                config: { auth: { mode: 'required', strategy: 'default', payload: 'optional' },
+                    payload: { output: 'stream', parse: false } }
+            });
         };
 
         expect(fn).to.throw(Error);
@@ -192,7 +202,12 @@ describe('Bewit', function () {
 
         var fn = function () {
 
-            server.route({ method: 'POST', path: '/bewitPayload', handler: bewitHandler, config: { auth: { mode: 'required', payload: false }, payload: { output: 'stream', parse: false } } });
+            server.route({ method: 'POST',
+                path: '/bewitPayload',
+                handler: bewitHandler,
+                config: { auth: { mode: 'required', strategy: 'default', payload: false },
+                    payload: { output: 'stream', parse: false } }
+            });
         };
 
         expect(fn).to.not.throw(Error);

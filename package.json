@@ -1,7 +1,7 @@
 {
   "name": "hapi-auth-hawk",
   "description": "Hawk authentication plugin",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "author": "Eran Hammer <eran@hueniverse.com> (http://hueniverse.com)",
   "repository": "git://github.com/spumko/hapi-auth-hawk",
   "main": "index",
@@ -24,7 +24,7 @@
     "hapi": ">=2.x.x"
   },
   "devDependencies": {
-    "hapi": "5.x.x",
+    "hapi": "6.x.x",
     "lab": "3.x.x"
   },
   "scripts": {
