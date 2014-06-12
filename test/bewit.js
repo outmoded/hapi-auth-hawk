@@ -66,7 +66,7 @@ describe('Bewit', function () {
 
             expect(err).to.not.exist;
 
-            server.auth.strategy('default', 'bewit', { getCredentialsFunc: getCredentials });
+            server.auth.strategy('default', 'bewit', true, { getCredentialsFunc: getCredentials });
 
             server.route([
                 { method: 'GET', path: '/bewit', handler: bewitHandler, config: { auth: 'default' } },
