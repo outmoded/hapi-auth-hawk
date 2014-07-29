@@ -453,6 +453,31 @@ describe('Hawk', function () {
         });
     });
 
+    it('returns an error with payload validation when the payload is absent', function (done) {
+
+        var server = new Hapi.Server();
+        server.pack.register(require('../'), function (err) {
+
+            expect(err).to.not.exist;
+            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+            server.route({ method: 'POST', path: '/hawkPayload',
+                handler: function (request, reply) { reply('Success'); },
+                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } } });
+
+            var payload = 'Here is my payload';
+            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
+            payload = '';
+            var request = { method: 'POST', url: 'http://example.com:8080/hawkPayload', headers: { authorization: authHeader.field }, payload: payload };
+
+            server.inject(request, function (res) {
+
+                expect(res.statusCode).to.equal(401);
+                expect(res.result.message).to.equal('Payload is invalid');
+                done();
+            });
+        });
+    });
+
     it('returns an error with payload validation when the payload is tampered with and the route has optional validation', function (done) {
 
         var server = new Hapi.Server();
