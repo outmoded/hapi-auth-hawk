@@ -5,6 +5,7 @@
 
 [![Build Status](https://secure.travis-ci.org/spumko/hapi-auth-hawk.png)](http://travis-ci.org/spumko/hapi-auth-hawk)
 
+Lead Maintainer: [Bian Tan](https://github.com/biant)
 
 #### Hawk authentication
 
