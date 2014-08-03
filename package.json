@@ -3,7 +3,7 @@
   "description": "Hawk authentication plugin",
   "version": "1.1.0",
   "author": "Eran Hammer <eran@hueniverse.com> (http://hueniverse.com)",
-  "repository": "git://github.com/spumko/hapi-auth-hawk",
+  "repository": "git://github.com/hapijs/hapi-auth-hawk",
   "main": "index",
   "keywords": [
     "hapi",
@@ -33,7 +33,7 @@
   "licenses": [
     {
       "type": "BSD",
-      "url": "http://github.com/spumko/hapi-auth-hawk/raw/master/LICENSE"
+      "url": "http://github.com/hapijs/hapi-auth-hawk/raw/master/LICENSE"
     }
   ]
 }

@@ -1,9 +1,8 @@
-<a href="https://github.com/spumko"><img src="https://raw.github.com/spumko/spumko/master/images/from.png" align="right" /></a>
 ### hapi-auth-hawk
 
-[**hapi**](https://github.com/spumko/hapi) Hawk authentication plugin
+[**hapi**](https://github.com/hapijs/hapi) Hawk authentication plugin
 
-[![Build Status](https://secure.travis-ci.org/spumko/hapi-auth-hawk.png)](http://travis-ci.org/spumko/hapi-auth-hawk)
+[![Build Status](https://secure.travis-ci.org/hapijs/hapi-auth-hawk.png)](http://travis-ci.org/hapijs/hapi-auth-hawk)
 
 Lead Maintainer: [Bian Tan](https://github.com/biant)
 
