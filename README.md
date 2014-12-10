@@ -22,6 +22,7 @@ authentication. The scheme requires the following options:
 ```javascript
 var Hapi = require('hapi');
 var server = new Hapi.Server();
+server.connection();
 
 var credentials = {
     d74s3nz2873n: {
@@ -35,7 +36,7 @@ var getCredentials = function (id, callback) {
     return callback(null, credentials[id]);
 };
 
-server.pack.require('hapi-auth-hawk', function (err) {
+server.register('hapi-auth-hawk', function (err) {
 
     server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
 });
@@ -59,6 +60,7 @@ be used with 'GET' requests and requires the following options:
 ```javascript
 var Hapi = require('hapi');
 var server = new Hapi.Server();
+server.connection();
 
 var credentials = {
     d74s3nz2873n: {
@@ -72,7 +74,7 @@ var getCredentials = function (id, callback) {
     return callback(null, credentials[id]);
 };
 
-server.pack.require('hapi-auth-hawk', function (err) {
+server.register('hapi-auth-hawk', function (err) {
 
     server.auth.strategy('default', 'bewit', { getCredentialsFunc: getCredentials });
 });
