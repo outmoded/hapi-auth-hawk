@@ -21,6 +21,7 @@ authentication. The scheme requires the following options:
 
 ```javascript
 var Hapi = require('hapi');
+var HapiHawk = require('hapi-auth-hawk');
 var server = new Hapi.Server();
 server.connection();
 
@@ -36,7 +37,7 @@ var getCredentials = function (id, callback) {
     return callback(null, credentials[id]);
 };
 
-server.register('hapi-auth-hawk', function (err) {
+server.register(HapiHawk, function (err) {
 
     server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
 });
