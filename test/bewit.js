@@ -41,9 +41,7 @@ describe('bewit scheme', function () {
         if (credentials[id]) {
             return callback(credentials[id].err, credentials[id].cred);
         }
-        else {
-            return callback(null, null);
-        }
+        return callback(null, null);
     };
 
     var getBewit = function (id, path) {
@@ -51,9 +49,7 @@ describe('bewit scheme', function () {
         if (credentials[id] && credentials[id].cred) {
             return Hawk.uri.getBewit('http://example.com:8080' + path, { credentials: credentials[id].cred, ttlSec: 60 });
         }
-        else {
-            return '';
-        }
+        return '';
     };
 
     var bewitHandler = function (request, reply) {
@@ -74,7 +70,7 @@ describe('bewit scheme', function () {
             server.route([
                 { method: 'GET', path: '/bewit', handler: bewitHandler, config: { auth: 'default' } },
                 { method: 'GET', path: '/bewitOptional', handler: bewitHandler, config: { auth: { mode: 'optional', strategy: 'default' } } },
-                { method: 'GET', path: '/bewitScope', handler: bewitHandler, config: { auth: { scope: 'x', strategy: 'default' } } },
+                { method: 'GET', path: '/bewitScope', handler: bewitHandler, config: { auth: { scope: 'x', strategy: 'default' } } }
             ]);
 
             done();
@@ -135,7 +131,7 @@ describe('bewit scheme', function () {
         var bewit = getBewit('john', '/bewit');
         var request = { method: 'GET', url: '/bewit?bewit=' + bewit, headers: { custom: 'example.com:8080' } };
 
-        var server = new Hapi.Server();
+        server = new Hapi.Server();
         server.connection();
         server.register(require('../'), function (err) {
 

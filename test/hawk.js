@@ -49,9 +49,7 @@ describe('hawk scheme', function () {
         if (credentials[id]) {
             return callback(credentials[id].err, credentials[id].cred);
         }
-        else {
-            return callback(null, null);
-        }
+        return callback(null, null);
     };
 
     var hawkHeader = function (id, path) {
@@ -59,9 +57,7 @@ describe('hawk scheme', function () {
         if (credentials[id] && credentials[id].cred) {
             return Hawk.client.header('http://example.com:8080' + path, 'POST', { credentials: credentials[id].cred });
         }
-        else {
-            return '';
-        }
+        return '';
     };
 
     it('returns a reply on successful auth', function (done) {
@@ -72,10 +68,14 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawk',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: 'default' } }
-            );
+            server.route({
+                method: 'POST', path: '/hawk',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: 'default' }
+            });
 
             var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: hawkHeader('john', '/hawk').field } };
             server.inject(request, function (res) {
@@ -95,10 +95,14 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkOptional',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'optional', strategy: 'default' } } }
-            );
+            server.route({
+                method: 'POST', path: '/hawkOptional',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'optional', strategy: 'default' } }
+            });
 
             var request = { method: 'POST', url: 'http://example.com:8080/hawkOptional' };
             server.inject(request, function (res) {
@@ -181,10 +185,14 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawk',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: 'default'  } }
-            );
+            server.route({
+                method: 'POST', path: '/hawk',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: 'default'  }
+            });
 
             var authHeader = hawkHeader('john', '/hawk');
             var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: authHeader.field } };
@@ -218,10 +226,14 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkValidate',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: 'default', validate: { query: {} } } }
-            );
+            server.route({
+                method: 'POST', path: '/hawkValidate',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: 'default', validate: { query: {} } }
+            });
 
             var authHeader = hawkHeader('john', '/hawkValidate?a=1');
             var request = { method: 'POST', url: 'http://example.com:8080/hawkValidate?a=1', headers: { authorization: authHeader.field } };
@@ -256,10 +268,14 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkError',
-                handler: function (request, reply) { reply(new Error()); },
-                config: { auth: 'default' } }
-            );
+            server.route({
+                method: 'POST', path: '/hawkError',
+                handler: function (request, reply) {
+
+                    reply(new Error());
+                },
+                config: { auth: 'default' }
+            });
 
             var request = { method: 'POST', url: 'http://example.com:8080/hawkError', headers: { authorization: hawkHeader('john', '/hawkError').field } };
             server.inject(request, function (res) {
@@ -279,10 +295,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST',
+            server.route({
+                method: 'POST',
                 path: '/hawk',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: 'default' } });
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: 'default' }
+            });
 
             var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: hawkHeader('john', 'abcd').field } };
             server.inject(request, function (res) {
@@ -302,8 +323,14 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawk', handler: function (request, reply) { reply('Success'); },
-                config: { auth: 'default' } });
+            server.route({
+                method: 'POST', path: '/hawk',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: 'default' }
+            });
 
             var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: 'junk' } };
             server.inject(request, function (res) {
@@ -323,8 +350,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawk', handler: function (request, reply) { reply('Success'); },
-                config: { auth: 'default' } });
+            server.route({
+                method: 'POST',
+                path: '/hawk',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: 'default' }
+            });
 
             var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: 'junk something' } };
             server.inject(request, function (res) {
@@ -344,8 +378,13 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkScope',
-                handler: function (request, reply) { reply('Success'); },
+            server.route({
+                method: 'POST',
+                path: '/hawkScope',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
                 config: { auth: { scope: 'x', strategy: 'default'  } }
             });
 
@@ -373,10 +412,15 @@ describe('hawk scheme', function () {
                 }
             });
 
-            server.route({ method: 'POST', path: '/hawk',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: 'default' } }
-            );
+            server.route({
+                method: 'POST',
+                path: '/hawk',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: 'default' }
+            });
 
             var request = { method: 'POST', url: '/hawk', headers: { authorization: hawkHeader('john', '/hawk').field, custom: 'example.com:8080' } };
             server.inject(request, function (res) {
@@ -396,10 +440,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkPayload',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } } }
-            );
+            server.route({
+                method: 'POST',
+                path: '/hawkPayload',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'application text formatted payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload, contentType: 'text/plain' });
@@ -428,9 +477,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkPayload',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } } });
+            server.route({
+                method: 'POST',
+                path: '/hawkPayload',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'Here is my payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
@@ -454,9 +509,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkPayload',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } } });
+            server.route({
+                method: 'POST',
+                path: '/hawkPayload',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'Here is my payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
@@ -480,10 +541,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkPayloadOptional',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'required', payload: 'optional', strategy: 'default' }, payload: { override: 'text/plain' } } }
-            );
+            server.route({
+                method: 'POST',
+                path: '/hawkPayloadOptional',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'required', payload: 'optional', strategy: 'default' }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'Here is my payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadOptional', 'POST', { credentials: credentials.john.cred, payload: payload });
@@ -507,10 +573,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkPayloadOptional',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'required', payload: 'optional', strategy: 'default'  }, payload: { override: 'text/plain' } } }
-            );
+            server.route({
+                method: 'POST',
+                path: '/hawkPayloadOptional',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'required', payload: 'optional', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'Here is my payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadOptional', 'POST', { credentials: credentials.john.cred, payload: payload });
@@ -533,8 +604,13 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkPayloadOptional',
-                handler: function (request, reply) { reply('Success'); },
+            server.route({
+                method: 'POST',
+                path: '/hawkPayloadOptional',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
                 config: { auth: { mode: 'required', payload: 'optional', strategy: 'default'  }, payload: { override: 'text/plain' } } }
             );
 
@@ -559,10 +635,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkPayloadNone',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } } }
-            );
+            server.route({
+                method: 'POST',
+                path: '/hawkPayloadNone',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'Here is my payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadNone', 'POST', { credentials: credentials.john.cred, payload: payload });
@@ -585,10 +666,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkPayloadNone',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } } }
-            );
+            server.route({
+                method: 'POST',
+                path: '/hawkPayloadNone',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'Here is my payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadNone', 'POST', { credentials: credentials.john.cred, payload: payload });
@@ -612,10 +698,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkOptionalPayload',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } } }
-            );
+            server.route({
+                method: 'POST',
+                path: '/hawkOptionalPayload',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'Here is my payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkOptionalPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
@@ -638,10 +729,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkOptionalPayload',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } } }
-            );
+            server.route({
+                method: 'POST',
+                path: '/hawkOptionalPayload',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'Here is my payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkOptionalPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
@@ -665,10 +761,15 @@ describe('hawk scheme', function () {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkPayload',
-                handler: function (request, reply) { reply('Success'); },
-                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } } }
-            );
+            server.route({
+                method: 'POST',
+                path: '/hawkPayload',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            });
 
             var payload = 'Here is my payload';
             var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred });
