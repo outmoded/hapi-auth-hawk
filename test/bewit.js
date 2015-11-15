@@ -1,29 +1,31 @@
+'use strict';
+
 // Load modules
 
-var Boom = require('boom');
-var Code = require('code');
-var Hapi = require('hapi');
-var Hawk = require('hawk');
-var Lab = require('lab');
+const Boom = require('boom');
+const Code = require('code');
+const Hapi = require('hapi');
+const Hawk = require('hawk');
+const Lab = require('lab');
 
 
 // Declare internals
 
-var internals = {};
+const internals = {};
 
 
 // Test shortcuts
 
-var lab = exports.lab = Lab.script();
-var describe = lab.describe;
-var it = lab.it;
-var before = lab.before;
-var expect = Code.expect;
+const lab = exports.lab = Lab.script();
+const describe = lab.describe;
+const it = lab.it;
+const before = lab.before;
+const expect = Code.expect;
 
 
-describe('bewit scheme', function () {
+describe('bewit scheme', () => {
 
-    var credentials = {
+    const credentials = {
         'john': {
             cred: {
                 id: 'john',
@@ -36,7 +38,7 @@ describe('bewit scheme', function () {
         }
     };
 
-    var getCredentials = function (id, callback) {
+    const getCredentials = function (id, callback) {
 
         if (credentials[id]) {
             return callback(credentials[id].err, credentials[id].cred);
@@ -44,7 +46,7 @@ describe('bewit scheme', function () {
         return callback(null, null);
     };
 
-    var getBewit = function (id, path) {
+    const getBewit = function (id, path) {
 
         if (credentials[id] && credentials[id].cred) {
             return Hawk.uri.getBewit('http://example.com:8080' + path, { credentials: credentials[id].cred, ttlSec: 60 });
@@ -52,16 +54,16 @@ describe('bewit scheme', function () {
         return '';
     };
 
-    var bewitHandler = function (request, reply) {
+    const bewitHandler = function (request, reply) {
 
         reply('Success');
     };
 
-    var server = new Hapi.Server();
+    let server = new Hapi.Server();
     server.connection();
-    before(function (done) {
+    before((done) => {
 
-        server.register(require('../'), function (err) {
+        server.register(require('../'), (err) => {
 
             expect(err).to.not.exist();
 
@@ -77,63 +79,63 @@ describe('bewit scheme', function () {
         });
     });
 
-    it('returns a reply on successful auth', function (done) {
+    it('returns a reply on successful auth', (done) => {
 
-        var bewit = getBewit('john', '/bewit');
-        server.inject('http://example.com:8080/bewit?bewit=' + bewit, function (res) {
+        const bewit = getBewit('john', '/bewit');
+        server.inject('http://example.com:8080/bewit?bewit=' + bewit, (res) => {
 
             expect(res.result).to.equal('Success');
             done();
         });
     });
 
-    it('returns an error reply on failed optional auth', function (done) {
+    it('returns an error reply on failed optional auth', (done) => {
 
-        var bewit = getBewit('john', '/abc');
-        server.inject('http://example.com:8080/bewitOptional?bewit=' + bewit, function (res) {
-
-            expect(res.statusCode).to.equal(401);
-            done();
-        });
-    });
-
-    it('returns an error on bad bewit', function (done) {
-
-        var bewit = getBewit('john', '/abc');
-        server.inject('http://example.com:8080/bewit?bewit=' + bewit, function (res) {
+        const bewit = getBewit('john', '/abc');
+        server.inject('http://example.com:8080/bewitOptional?bewit=' + bewit, (res) => {
 
             expect(res.statusCode).to.equal(401);
             done();
         });
     });
 
-    it('returns an error on bad bewit format', function (done) {
+    it('returns an error on bad bewit', (done) => {
 
-        server.inject('http://example.com:8080/bewit?bewit=junk', function (res) {
+        const bewit = getBewit('john', '/abc');
+        server.inject('http://example.com:8080/bewit?bewit=' + bewit, (res) => {
+
+            expect(res.statusCode).to.equal(401);
+            done();
+        });
+    });
+
+    it('returns an error on bad bewit format', (done) => {
+
+        server.inject('http://example.com:8080/bewit?bewit=junk', (res) => {
 
             expect(res.statusCode).to.equal(400);
             done();
         });
     });
 
-    it('returns an error on insufficient scope', function (done) {
+    it('returns an error on insufficient scope', (done) => {
 
-        var bewit = getBewit('john', '/bewitScope');
-        server.inject('http://example.com:8080/bewitScope?bewit=' + bewit, function (res) {
+        const bewit = getBewit('john', '/bewitScope');
+        server.inject('http://example.com:8080/bewitScope?bewit=' + bewit, (res) => {
 
             expect(res.statusCode).to.equal(403);
             done();
         });
     });
 
-    it('returns a reply on successful auth when using a custom host header key', function (done) {
+    it('returns a reply on successful auth when using a custom host header key', (done) => {
 
-        var bewit = getBewit('john', '/bewit');
-        var request = { method: 'GET', url: '/bewit?bewit=' + bewit, headers: { custom: 'example.com:8080' } };
+        const bewit = getBewit('john', '/bewit');
+        const request = { method: 'GET', url: '/bewit?bewit=' + bewit, headers: { custom: 'example.com:8080' } };
 
         server = new Hapi.Server();
         server.connection();
-        server.register(require('../'), function (err) {
+        server.register(require('../'), (err) => {
 
             expect(err).to.not.exist();
 
@@ -146,7 +148,7 @@ describe('bewit scheme', function () {
 
             server.route({ method: 'GET', path: '/bewit', handler: bewitHandler, config: { auth: 'default' } });
 
-            server.inject(request, function (res) {
+            server.inject(request, (res) => {
 
                 expect(res.statusCode).to.equal(200);
                 expect(res.result).to.equal('Success');
@@ -155,9 +157,9 @@ describe('bewit scheme', function () {
         });
     });
 
-    it('cannot add a route that has payload validation required', function (done) {
+    it('cannot add a route that has payload validation required', (done) => {
 
-        var fn = function () {
+        const fn = function () {
 
             server.route({ method: 'POST',
                 path: '/bewitPayload',
@@ -171,9 +173,9 @@ describe('bewit scheme', function () {
         done();
     });
 
-    it('cannot add a route that has payload validation as optional', function (done) {
+    it('cannot add a route that has payload validation as optional', (done) => {
 
-        var fn = function () {
+        const fn = function () {
 
             server.route({ method: 'POST',
                 path: '/bewitPayload',
@@ -187,9 +189,9 @@ describe('bewit scheme', function () {
         done();
     });
 
-    it('can add a route that has payload validation as none', function (done) {
+    it('can add a route that has payload validation as none', (done) => {
 
-        var fn = function () {
+        const fn = function () {
 
             server.route({ method: 'POST',
                 path: '/bewitPayload',
