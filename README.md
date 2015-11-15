@@ -20,19 +20,19 @@ authentication. The scheme requires the following options:
 - `hawk` - optional protocol options passed to `Hawk.server.authenticate()`.
 
 ```javascript
-var Hapi = require('hapi');
-var HapiHawk = require('hapi-auth-hawk');
-var server = new Hapi.Server();
+const Hapi = require('hapi');
+const HapiHawk = require('hapi-auth-hawk');
+const server = new Hapi.Server();
 server.connection();
 
-var credentials = {
+const credentials = {
     d74s3nz2873n: {
         key: 'werxhqb98rpaxn39848xrunpaw3489ruxnpa98w4rxn',
         algorithm: 'sha256'
     }
 }
 
-var getCredentials = function (id, callback) {
+const getCredentials = function (id, callback) {
 
     return callback(null, credentials[id]);
 };
@@ -59,18 +59,18 @@ be used with 'GET' requests and requires the following options:
 - `hawk` - optional protocol options passed to `Hawk.server.authenticateBewit()`.
 
 ```javascript
-var Hapi = require('hapi');
-var server = new Hapi.Server();
+const Hapi = require('hapi');
+const server = new Hapi.Server();
 server.connection();
 
-var credentials = {
+const credentials = {
     d74s3nz2873n: {
         key: 'werxhqb98rpaxn39848xrunpaw3489ruxnpa98w4rxn',
         algorithm: 'sha256'
     }
 }
 
-var getCredentials = function (id, callback) {
+const getCredentials = function (id, callback) {
 
     return callback(null, credentials[id]);
 };
@@ -84,15 +84,15 @@ server.register('hapi-auth-hawk', function (err) {
 To send an authenticated Bewit request, the URI must contain the `'bewit'` query parameter which can be generated using the Hawk module:
 
 ```javascript
-var Hawk = require('hawk');
+const Hawk = require('hawk');
 
-var credentials = {
+const credentials = {
     id: 'd74s3nz2873n',
     key: 'werxhqb98rpaxn39848xrunpaw3489ruxnpa98w4rxn',
     algorithm: 'sha256'
 };
 
-var uri = 'http://example.com:8080/endpoint';
-var bewit = Hawk.client.getBewit(uri, { credentials: credentials, ttlSec: 60 });
+let uri = 'http://example.com:8080/endpoint';
+const bewit = Hawk.client.getBewit(uri, { credentials: credentials, ttlSec: 60 });
 uri += '?bewit=' + bewit;
 ```
