@@ -1,30 +1,38 @@
+'use strict';
+
 // Load modules
 
-var Stream = require('stream');
-var Boom = require('boom');
-var Code = require('code');
-var Hapi = require('hapi');
-var Hawk = require('hawk');
-var Hoek = require('hoek');
-var Lab = require('lab');
+const Stream = require('stream');
+const Boom = require('boom');
+const Code = require('code');
+const Hapi = require('hapi');
+const Hawk = require('hawk');
+const Hoek = require('hoek');
+const Lab = require('lab');
 
 
 // Declare internals
 
-var internals = {};
+const internals = {};
 
 
 // Test shortcuts
 
-var lab = exports.lab = Lab.script();
-var describe = lab.describe;
-var it = lab.it;
-var expect = Code.expect;
+const lab = exports.lab = Lab.script();
+const describe = lab.describe;
+const it = lab.it;
+const expect = Code.expect;
 
+internals.initServer = (callback) => {
 
-describe('hawk scheme', function () {
+    const server = new Hapi.Server();
+    server.connection();
+    callback(server);
+};
 
-    var credentials = {
+describe('hawk scheme', () => {
+
+    const credentials = {
         'john': {
             cred: {
                 id: 'john',
@@ -44,7 +52,7 @@ describe('hawk scheme', function () {
         }
     };
 
-    var getCredentials = function (id, callback) {
+    const getCredentials = (id, callback) => {
 
         if (credentials[id]) {
             return callback(credentials[id].err, credentials[id].cred);
@@ -52,7 +60,7 @@ describe('hawk scheme', function () {
         return callback(null, null);
     };
 
-    var hawkHeader = function (id, path) {
+    const hawkHeader = (id, path) => {
 
         if (credentials[id] && credentials[id].cred) {
 
@@ -62,753 +70,776 @@ describe('hawk scheme', function () {
         return '';
     };
 
-    it('returns a reply on successful auth', function (done) {
+    it('returns a reply on successful auth', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST', path: '/hawk',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: 'default' }
-            });
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST', path: '/hawk',
+                    handler: (request, reply) => {
 
-            var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: hawkHeader('john', '/hawk').field } };
-            server.inject(request, function (res) {
+                        reply('Success');
+                    },
+                    config: { auth: 'default' }
+                });
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('Success');
-                done();
-            });
-        });
-    });
+                const request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: hawkHeader('john', '/hawk').field } };
+                server.inject(request, (res) => {
 
-    it('returns a reply on failed optional auth', function (done) {
-
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
-
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST', path: '/hawkOptional',
-                handler: function (request, reply) {
-
-                    reply('Success');
-                },
-                config: { auth: { mode: 'optional', strategy: 'default' } }
-            });
-
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkOptional' };
-            server.inject(request, function (res) {
-
-                expect(res.result).to.equal('Success');
-                done();
-            });
-        });
-    });
-
-    it('includes authorization trailer in response when the response is a stream', function (done) {
-
-        var hawkStreamHandler = function (request, reply) {
-
-            var TestStream = function () {
-
-                Stream.Readable.call(this);
-            };
-
-            Hoek.inherits(TestStream, Stream.Readable);
-
-            TestStream.prototype._read = function (size) {
-
-                var self = this;
-
-                if (this.isDone) {
-                    return;
-                }
-                this.isDone = true;
-
-                setTimeout(function () {
-
-                    self.push('hi');
-                }, 2);
-
-                setTimeout(function () {
-
-                    self.push(null);
-                }, 5);
-            };
-
-            var stream = new TestStream();
-            reply(stream);
-        };
-
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
-
-            expect(err).to.not.exist();
-
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-
-            server.route({ 
-                method: 'POST', 
-                path: '/hawkStream', 
-                handler: hawkStreamHandler, 
-                config: { auth: 'default' } 
-            });
-
-            var authHeader = hawkHeader('john', '/hawkStream');
-
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkStream', headers: { authorization: authHeader.field } };
-
-            server.inject(request, function (res) {
-
-                expect(res.statusCode).to.equal(200);
-
-                // @question trailers or headers.
-
-                expect(res.trailers['server-authorization']).to.contain('Hawk');
-
-                var options = {
-                    payload: res.payload
-                };
-
-                getCredentials('john', function (err, cred) {
-
-                    var header = Hawk.server.header(cred, authHeader.artifacts, options);
-
-                    // @question trailers or headers.
-
-                    expect(header).to.equal(res.trailers['server-authorization']);
-                    done();
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result).to.equal('Success');
+                    server.stop(done);
                 });
             });
         });
     });
 
-    it('includes valid authorization trailer in response when the response is text', function (done) {
+    it('returns a reply on failed optional auth', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST', path: '/hawk',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: 'default'  }
-            });
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST', path: '/hawkOptional',
+                    handler: (request, reply) => {
 
-            var authHeader = hawkHeader('john', '/hawk');
-            var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: authHeader.field } };
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'optional', strategy: 'default' } }
+                });
 
-            server.inject(request, function (res) {
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkOptional' };
+                server.inject(request, (res) => {
 
-                expect(res.statusCode).to.equal(200);
-
-                // @question
-                // swapped
-                // expect(res.headers['server-authorization']).to.contain('Hawk');
-                expect(res.trailers['server-authorization']).to.contain('Hawk');
-
-                var options = {
-                    payload: res.payload,
-                    contentType: res.headers['content-type']
-                };
-
-                getCredentials('john', function (err, cred) {
-
-                    var header = Hawk.server.header(cred, authHeader.artifacts, options);
-
-                    // @question
-                    // swapped
-                    // expect(header).to.equal(res.headers['server-authorization']);
-                    expect(header).to.equal(res.trailers['server-authorization']);
-                    done();
+                    expect(res.result).to.equal('Success');
+                    server.stop(done);
                 });
             });
         });
     });
 
-    it('includes valid authorization trailer in response when the request fails validation', function (done) {
+    it('includes authorization trailer in response when the response is a stream', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST', path: '/hawkValidate',
-                handler: function (request, reply) {
+            const hawkStreamHandler = (request, reply) => {
 
-                    reply('Success');
-                },
-                config: { auth: 'default', validate: { query: {} } }
-            });
+                const TestStream = function (){
 
-            var authHeader = hawkHeader('john', '/hawkValidate?a=1');
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkValidate?a=1', headers: { authorization: authHeader.field } };
-            server.inject(request, function (res) {
-
-                // @question swapped headers to trailers.
-
-                expect(res.trailers['server-authorization']).to.exist();
-                expect(res.trailers['server-authorization']).to.contain('Hawk');
-                expect(res.statusCode).to.equal(400);
-
-                var options = {
-                    payload: res.payload,
-                    contentType: res.headers['content-type']
+                    Stream.Readable.call(this);
                 };
 
-                getCredentials('john', function (err, cred) {
+                Hoek.inherits(TestStream, Stream.Readable);
 
-                    authHeader.artifacts.credentials = cred;
-                    var header = Hawk.server.header(cred, authHeader.artifacts, options);
+                TestStream.prototype._read = function (size) {
 
-                    // @question swapped headers to trailers again.
-                    // expect(header).to.equal(res.headers['server-authorization']);
-                    expect(header).to.equal(res.trailers['server-authorization']);
+                    const self = this;
 
-                    done();
-                });
-            });
-        });
-    });
+                    if (this.isDone) {
+                        return;
+                    }
+                    this.isDone = true;
 
-    it('does not include authorization header in response when the response is an error', function (done) {
+                    setTimeout(() => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+                        self.push('hi');
+                    }, 2);
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST', path: '/hawkError',
-                handler: function (request, reply) {
+                    setTimeout(() => {
 
-                    reply(new Error());
-                },
-                config: { auth: 'default' }
-            });
+                        self.push(null);
+                    }, 5);
+                };
 
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkError', headers: { authorization: hawkHeader('john', '/hawkError').field } };
-            server.inject(request, function (res) {
-
-                expect(res.statusCode).to.equal(500);
-                expect(res.headers.authorization).to.not.exist();
-                done();
-            });
-        });
-    });
-
-    it('returns an error on bad auth header', function (done) {
-
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
-
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawk',
-                handler: function (request, reply) {
-
-                    reply('Success');
-                },
-                config: { auth: 'default' }
-            });
-
-            var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: hawkHeader('john', 'abcd').field } };
-            server.inject(request, function (res) {
-
-                expect(res.result).to.exist();
-                expect(res.statusCode).to.equal(401);
-                done();
-            });
-        });
-    });
-
-    it('returns an error on bad header format', function (done) {
-
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
-
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST', path: '/hawk',
-                handler: function (request, reply) {
-
-                    reply('Success');
-                },
-                config: { auth: 'default' }
-            });
-
-            var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: 'junk' } };
-            server.inject(request, function (res) {
-
-                expect(res.result).to.exist();
-                expect(res.statusCode).to.equal(401);
-                done();
-            });
-        });
-    });
-
-    it('returns an error on bad scheme', function (done) {
-
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
-
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawk',
-                handler: function (request, reply) {
-
-                    reply('Success');
-                },
-                config: { auth: 'default' }
-            });
-
-            var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: 'junk something' } };
-            server.inject(request, function (res) {
-
-                expect(res.result).to.exist();
-                expect(res.statusCode).to.equal(401);
-                done();
-            });
-        });
-    });
-
-    it('returns an error on insufficient scope', function (done) {
-
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
-
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkScope',
-                handler: function (request, reply) {
-
-                    reply('Success');
-                },
-                config: { auth: { scope: 'x', strategy: 'default'  } }
-            });
-
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkScope', payload: 'something', headers: { authorization: hawkHeader('john', '/hawkScope').field } };
-            server.inject(request, function (res) {
-
-                expect(res.statusCode).to.equal(403);
-                done();
-            });
-        });
-    });
-
-    it('returns a reply on successful auth when using a custom host header key', function (done) {
-
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
-
-            expect(err).to.not.exist();
-
-            server.auth.strategy('default', 'hawk', {
-                getCredentialsFunc: getCredentials,
-                hawk: {
-                    hostHeaderName: 'custom'
-                }
-            });
-
-            server.route({
-                method: 'POST',
-                path: '/hawk',
-                handler: function (request, reply) {
-
-                    reply('Success');
-                },
-                config: { auth: 'default' }
-            });
-
-            var request = { method: 'POST', url: '/hawk', headers: { authorization: hawkHeader('john', '/hawk').field, custom: 'example.com:8080' } };
-            server.inject(request, function (res) {
-
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('Success');
-                done();
-            });
-        });
-    });
-
-    it('returns a reply on successful auth and payload validation', function (done) {
-
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
-
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkPayload',
-                handler: function (request, reply) {
-
-                    reply('Success');
-                },
-                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
-            });
-
-            var payload = 'application text formatted payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload, contentType: 'text/plain' });
-            var request = {
-                method: 'POST',
-                url: 'http://example.com:8080/hawkPayload',
-                headers: { authorization: authHeader.field, 'content-type': 'text/plain' },
-                payload: payload,
-                simulate: { split: true }
+                const stream = new TestStream();
+                reply(stream);
             };
 
-            server.inject(request, function (res) {
+            server.register(require('../'), (err) => {
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('Success');
-                done();
+                expect(err).to.not.exist();
+
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+
+                server.route({
+                    method: 'POST',
+                    path: '/hawkStream',
+                    handler: hawkStreamHandler,
+                    config: { auth: 'default' }
+                });
+
+                const authHeader = hawkHeader('john', '/hawkStream');
+
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkStream', headers: { authorization: authHeader.field } };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(200);
+
+
+                    expect(res.trailers['server-authorization']).to.contain('Hawk');
+
+                    const options = {
+                        payload: res.payload
+                    };
+
+                    getCredentials('john', (err, cred) => {
+
+                        expect(err).to.not.exist();
+                        const header = Hawk.server.header(cred, authHeader.artifacts, options);
+
+                        // shot v3 trailers goes to trailers but v1 goes to headers.
+
+                        expect(header).to.equal(res.trailers['server-authorization']);
+                        server.stop(done);
+                    });
+                });
             });
         });
     });
 
-    it('returns an error with payload validation when the payload is tampered with', function (done) {
+    it('includes valid authorization trailer in response when the response is text', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkPayload',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
-            });
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST', path: '/hawk',
+                    handler: (request, reply) => {
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
-            payload += 'HACKED';
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkPayload', headers: { authorization: authHeader.field }, payload: payload };
+                        reply('Success');
+                    },
+                    config: { auth: 'default'  }
+                });
 
-            server.inject(request, function (res) {
+                const authHeader = hawkHeader('john', '/hawk');
+                const request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: authHeader.field } };
 
-                expect(res.statusCode).to.equal(401);
-                expect(res.result.message).to.equal('Payload is invalid');
-                done();
-            });
-        });
-    });
+                server.inject(request, (res) => {
 
-    it('returns an error with payload validation when the payload is absent', function (done) {
+                    expect(res.statusCode).to.equal(200);
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+                    // shot v3 trailers goes to trailers but v1 goes to headers.
+                    // expect(res.headers['server-authorization']).to.contain('Hawk');
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkPayload',
-                handler: function (request, reply) {
+                    expect(res.trailers['server-authorization']).to.contain('Hawk');
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
-            });
+                    const options = {
+                        payload: res.payload,
+                        contentType: res.headers['content-type']
+                    };
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
-            payload = '';
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkPayload', headers: { authorization: authHeader.field }, payload: payload };
+                    getCredentials('john', (err, cred) => {
 
-            server.inject(request, function (res) {
+                        expect(err).to.not.exist();
 
-                expect(res.statusCode).to.equal(401);
-                expect(res.result.message).to.equal('Payload is invalid');
-                done();
+                        const header = Hawk.server.header(cred, authHeader.artifacts, options);
+
+                        expect(header).to.equal(res.trailers['server-authorization']);
+                        server.stop(done);
+                    });
+                });
             });
         });
     });
 
-    it('returns an error with payload validation when the payload is tampered with and the route has optional validation', function (done) {
+    it('includes valid authorization trailer in response when the request fails validation', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkPayloadOptional',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'required', payload: 'optional', strategy: 'default' }, payload: { override: 'text/plain' } }
-            });
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST', path: '/hawkValidate',
+                    handler: (request, reply) => {
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadOptional', 'POST', { credentials: credentials.john.cred, payload: payload });
-            payload += 'HACKED';
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadOptional', headers: { authorization: authHeader.field }, payload: payload };
+                        reply('Success');
+                    },
+                    config: { auth: 'default', validate: { query: {} } }
+                });
 
-            server.inject(request, function (res) {
+                const authHeader = hawkHeader('john', '/hawkValidate?a=1');
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkValidate?a=1', headers: { authorization: authHeader.field } };
+                server.inject(request, (res) => {
 
-                expect(res.statusCode).to.equal(401);
-                expect(res.result.message).to.equal('Payload is invalid');
-                done();
-            });
-        });
-    });
+                    // shot v3 trailers goes to trailers but v1 goes to headers.
+                    // expect(res.headers['server-authorization']).to.contain('Hawk');
 
-    it('returns a reply on successful auth and payload validation when validation is optional', function (done) {
+                    expect(res.trailers['server-authorization']).to.exist();
+                    expect(res.trailers['server-authorization']).to.contain('Hawk');
+                    expect(res.statusCode).to.equal(400);
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+                    const options = {
+                        payload: res.payload,
+                        contentType: res.headers['content-type']
+                    };
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkPayloadOptional',
-                handler: function (request, reply) {
+                    getCredentials('john', (err, cred) => {
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'required', payload: 'optional', strategy: 'default'  }, payload: { override: 'text/plain' } }
-            });
+                        expect(err).to.not.exist();
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadOptional', 'POST', { credentials: credentials.john.cred, payload: payload });
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadOptional', headers: { authorization: authHeader.field }, payload: payload };
+                        authHeader.artifacts.credentials = cred;
+                        const header = Hawk.server.header(cred, authHeader.artifacts, options);
 
-            server.inject(request, function (res) {
+                        // expect(header).to.equal(res.headers['server-authorization']);
+                        expect(header).to.equal(res.trailers['server-authorization']);
 
-                expect(res.result).to.exist();
-                expect(res.result).to.equal('Success');
-                done();
+                        server.stop(done);
+                    });
+                });
             });
         });
     });
 
-    it('returns a reply on successful auth when payload validation is optional and no payload hash exists', function (done) {
+    it('does not include authorization header in response when the response is an error', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkPayloadOptional',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'required', payload: 'optional', strategy: 'default'  }, payload: { override: 'text/plain' } } }
-            );
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST', path: '/hawkError',
+                    handler: (request, reply) => {
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadOptional', 'POST', { credentials: credentials.john.cred });
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadOptional', headers: { authorization: authHeader.field }, payload: payload };
+                        reply(new Error());
+                    },
+                    config: { auth: 'default' }
+                });
 
-            server.inject(request, function (res) {
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkError', headers: { authorization: hawkHeader('john', '/hawkError').field } };
+                server.inject(request, (res) => {
 
-                expect(res.result).to.exist();
-                expect(res.result).to.equal('Success');
-                done();
+                    expect(res.statusCode).to.equal(500);
+                    expect(res.headers.authorization).to.not.exist();
+                    server.stop(done);
+                });
             });
         });
     });
 
-    it('returns a reply on successful auth and when payload validation is disabled', function (done) {
+    it('returns an error on bad auth header', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkPayloadNone',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } }
-            });
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawk',
+                    handler: (request, reply) => {
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadNone', 'POST', { credentials: credentials.john.cred, payload: payload });
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadNone', headers: { authorization: authHeader.field }, payload: payload };
+                        reply('Success');
+                    },
+                    config: { auth: 'default' }
+                });
 
-            server.inject(request, function (res) {
+                const request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: hawkHeader('john', 'abcd').field } };
+                server.inject(request, (res) => {
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('Success');
-                done();
+                    expect(res.result).to.exist();
+                    expect(res.statusCode).to.equal(401);
+                    server.stop(done);
+                });
             });
         });
     });
 
-    it('returns a reply on successful auth when the payload is tampered with and the route has disabled validation', function (done) {
+    it('returns an error on bad header format', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkPayloadNone',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } }
-            });
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST', path: '/hawk',
+                    handler: (request, reply) => {
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadNone', 'POST', { credentials: credentials.john.cred, payload: payload });
-            payload += 'HACKED';
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadNone', headers: { authorization: authHeader.field }, payload: payload };
+                        reply('Success');
+                    },
+                    config: { auth: 'default' }
+                });
 
-            server.inject(request, function (res) {
+                const request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: 'junk' } };
+                server.inject(request, (res) => {
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('Success');
-                done();
+                    expect(res.result).to.exist();
+                    expect(res.statusCode).to.equal(401);
+                    server.stop(done);
+                });
             });
         });
     });
 
-    it('returns a reply on successful auth when auth is optional and when payload validation is required', function (done) {
+    it('returns an error on bad scheme', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkOptionalPayload',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
-            });
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawk',
+                    handler: (request, reply) => {
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkOptionalPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkOptionalPayload', headers: { authorization: authHeader.field }, payload: payload };
+                        reply('Success');
+                    },
+                    config: { auth: 'default' }
+                });
 
-            server.inject(request, function (res) {
+                const request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: 'junk something' } };
+                server.inject(request, (res) => {
 
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('Success');
-                done();
+                    expect(res.result).to.exist();
+                    expect(res.statusCode).to.equal(401);
+                    server.stop(done);
+                });
             });
         });
     });
 
-    it('returns an error with payload validation when the payload is tampered with and the route has optional auth', function (done) {
+    it('returns an error on insufficient scope', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkOptionalPayload',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
-            });
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkScope',
+                    handler: (request, reply) => {
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkOptionalPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
-            payload += 'HACKED';
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkOptionalPayload', headers: { authorization: authHeader.field }, payload: payload };
+                        reply('Success');
+                    },
+                    config: { auth: { scope: 'x', strategy: 'default'  } }
+                });
 
-            server.inject(request, function (res) {
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkScope', payload: 'something', headers: { authorization: hawkHeader('john', '/hawkScope').field } };
+                server.inject(request, (res) => {
 
-                expect(res.statusCode).to.equal(401);
-                expect(res.result.message).to.equal('Payload is invalid');
-                done();
+                    expect(res.statusCode).to.equal(403);
+                    server.stop(done);
+                });
             });
         });
     });
 
-    it('returns an error with payload validation when the payload hash is not included and payload validation is required', function (done) {
+    it('returns a reply on successful auth when using a custom host header key', (done) => {
 
-        var server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        internals.initServer((server) => {
 
-            expect(err).to.not.exist();
-            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({
-                method: 'POST',
-                path: '/hawkPayload',
-                handler: function (request, reply) {
+            server.register(require('../'), (err) => {
 
-                    reply('Success');
-                },
-                config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+                expect(err).to.not.exist();
+
+                server.auth.strategy('default', 'hawk', {
+                    getCredentialsFunc: getCredentials,
+                    hawk: {
+                        hostHeaderName: 'custom'
+                    }
+                });
+
+                server.route({
+                    method: 'POST',
+                    path: '/hawk',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: 'default' }
+                });
+
+                const request = { method: 'POST', url: '/hawk', headers: { authorization: hawkHeader('john', '/hawk').field, custom: 'example.com:8080' } };
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result).to.equal('Success');
+                    server.stop(done);
+                });
             });
+        });
+    });
 
-            var payload = 'Here is my payload';
-            var authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred });
-            var request = { method: 'POST', url: 'http://example.com:8080/hawkPayload', headers: { authorization: authHeader.field }, payload: payload };
+    it('returns a reply on successful auth and payload validation', (done) => {
 
-            server.inject(request, function (res) {
+        internals.initServer((server) => {
 
-                expect(res.statusCode).to.equal(401);
-                expect(res.result.message).to.equal('Missing payload authentication');
-                done();
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkPayload',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+                });
+
+                const payload = 'application text formatted payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload, contentType: 'text/plain' });
+                const request = {
+                    method: 'POST',
+                    url: 'http://example.com:8080/hawkPayload',
+                    headers: { authorization: authHeader.field, 'content-type': 'text/plain' },
+                    payload: payload,
+                    simulate: { split: true }
+                };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result).to.equal('Success');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns an error with payload validation when the payload is tampered with', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkPayload',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+                });
+
+                let payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
+                payload += 'HACKED';
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkPayload', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).to.equal('Payload is invalid');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns an error with payload validation when the payload is absent', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkPayload',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+                });
+
+                let payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
+                payload = '';
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkPayload', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).to.equal('Payload is invalid');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns an error with payload validation when the payload is tampered with and the route has optional validation', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkPayloadOptional',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'required', payload: 'optional', strategy: 'default' }, payload: { override: 'text/plain' } }
+                });
+
+                let payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadOptional', 'POST', { credentials: credentials.john.cred, payload: payload });
+                payload += 'HACKED';
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadOptional', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).to.equal('Payload is invalid');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns a reply on successful auth and payload validation when validation is optional', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkPayloadOptional',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'required', payload: 'optional', strategy: 'default'  }, payload: { override: 'text/plain' } }
+                });
+
+                const payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadOptional', 'POST', { credentials: credentials.john.cred, payload: payload });
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadOptional', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.result).to.exist();
+                    expect(res.result).to.equal('Success');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns a reply on successful auth when payload validation is optional and no payload hash exists', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkPayloadOptional',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'required', payload: 'optional', strategy: 'default'  }, payload: { override: 'text/plain' } } }
+                );
+
+                const payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadOptional', 'POST', { credentials: credentials.john.cred });
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadOptional', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.result).to.exist();
+                    expect(res.result).to.equal('Success');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns a reply on successful auth and when payload validation is disabled', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkPayloadNone',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } }
+                });
+
+                const payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadNone', 'POST', { credentials: credentials.john.cred, payload: payload });
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadNone', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result).to.equal('Success');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns a reply on successful auth when the payload is tampered with and the route has disabled validation', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkPayloadNone',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } }
+                });
+
+                let payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkPayloadNone', 'POST', { credentials: credentials.john.cred, payload: payload });
+                payload += 'HACKED';
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkPayloadNone', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result).to.equal('Success');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns a reply on successful auth when auth is optional and when payload validation is required', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkOptionalPayload',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+                });
+
+                const payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkOptionalPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkOptionalPayload', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result).to.equal('Success');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns an error with payload validation when the payload is tampered with and the route has optional auth', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkOptionalPayload',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+                });
+
+                let payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkOptionalPayload', 'POST', { credentials: credentials.john.cred, payload: payload });
+                payload += 'HACKED';
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkOptionalPayload', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).to.equal('Payload is invalid');
+                    server.stop(done);
+                });
+            });
+        });
+    });
+
+    it('returns an error with payload validation when the payload hash is not included and payload validation is required', (done) => {
+
+        internals.initServer((server) => {
+
+            server.register(require('../'), (err) => {
+
+                expect(err).to.not.exist();
+                server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+                server.route({
+                    method: 'POST',
+                    path: '/hawkPayload',
+                    handler: (request, reply) => {
+
+                        reply('Success');
+                    },
+                    config: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+                });
+
+                const payload = 'Here is my payload';
+                const authHeader = Hawk.client.header('http://example.com:8080/hawkPayload', 'POST', { credentials: credentials.john.cred });
+                const request = { method: 'POST', url: 'http://example.com:8080/hawkPayload', headers: { authorization: authHeader.field }, payload: payload };
+
+                server.inject(request, (res) => {
+
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).to.equal('Missing payload authentication');
+                    server.stop(done);
+                });
             });
         });
     });
