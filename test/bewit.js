@@ -59,6 +59,7 @@ describe('bewit scheme', function () {
 
     var server = new Hapi.Server();
     server.connection();
+
     before(function (done) {
 
         server.register(require('../'), function (err) {
@@ -159,15 +160,20 @@ describe('bewit scheme', function () {
 
         var fn = function () {
 
+            // server.route({ method: 'POST',
             server.route({ method: 'POST',
                 path: '/bewitPayload',
                 handler: bewitHandler,
-                config: { auth: { mode: 'required', strategy: 'default', payload: 'required' },
-                    payload: { output: 'stream', parse: false } }
+                config: { 
+                    auth: { mode: 'required', strategy: 'default', payload: 'required' },
+                    payload: { output: 'stream', parse: false } 
+                }
             });
         };
 
-        expect(fn).to.throw('Payload validation can only be required when all strategies support it in path: /bewitPayload');
+        // This relates to: hapi/lib/auth.js
+        // new hapi version removed "path: " from error message.
+        expect(fn).to.throw('Payload validation can only be required when all strategies support it in /bewitPayload');
         done();
     });
 
@@ -183,7 +189,7 @@ describe('bewit scheme', function () {
             });
         };
 
-        expect(fn).to.throw('Payload authentication requires at least one strategy with payload support in path: /bewitPayload');
+        expect(fn).to.throw('Payload authentication requires at least one strategy with payload support in /bewitPayload');
         done();
     });
 

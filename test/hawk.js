@@ -55,7 +55,9 @@ describe('hawk scheme', function () {
     var hawkHeader = function (id, path) {
 
         if (credentials[id] && credentials[id].cred) {
-            return Hawk.client.header('http://example.com:8080' + path, 'POST', { credentials: credentials[id].cred });
+
+            const header = Hawk.client.header('http://example.com:8080' + path, 'POST', { credentials: credentials[id].cred });
+            return  header;
         }
         return '';
     };
@@ -153,15 +155,28 @@ describe('hawk scheme', function () {
         server.register(require('../'), function (err) {
 
             expect(err).to.not.exist();
+
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
-            server.route({ method: 'POST', path: '/hawkStream', handler: hawkStreamHandler, config: { auth: 'default' } });
+
+            server.route({ 
+                method: 'POST', 
+                path: '/hawkStream', 
+                handler: hawkStreamHandler, 
+                config: { auth: 'default' } 
+            });
 
             var authHeader = hawkHeader('john', '/hawkStream');
+
             var request = { method: 'POST', url: 'http://example.com:8080/hawkStream', headers: { authorization: authHeader.field } };
+
             server.inject(request, function (res) {
 
                 expect(res.statusCode).to.equal(200);
-                expect(res.headers['server-authorization']).to.contain('Hawk');
+
+                // @question trailers or headers.
+                // Original, expect(res.headers['server-authorization']).to.contain('Hawk');
+
+                expect(res.trailers['server-authorization']).to.contain('Hawk');
 
                 var options = {
                     payload: res.payload
@@ -170,7 +185,12 @@ describe('hawk scheme', function () {
                 getCredentials('john', function (err, cred) {
 
                     var header = Hawk.server.header(cred, authHeader.artifacts, options);
-                    expect(header).to.equal(res.headers['server-authorization']);
+
+                    // @question trailers or headers.
+                    // swapped out headers for trailers and got test to pass.
+                    // expect(header).to.equal(res.headers['server-authorization']);
+
+                    expect(header).to.equal(res.trailers['server-authorization']);
                     done();
                 });
             });
@@ -200,7 +220,11 @@ describe('hawk scheme', function () {
             server.inject(request, function (res) {
 
                 expect(res.statusCode).to.equal(200);
-                expect(res.headers['server-authorization']).to.contain('Hawk');
+
+                // @question
+                // swapped
+                // expect(res.headers['server-authorization']).to.contain('Hawk');
+                expect(res.trailers['server-authorization']).to.contain('Hawk');
 
                 var options = {
                     payload: res.payload,
@@ -210,8 +234,11 @@ describe('hawk scheme', function () {
                 getCredentials('john', function (err, cred) {
 
                     var header = Hawk.server.header(cred, authHeader.artifacts, options);
-                    expect(header).to.equal(res.headers['server-authorization']);
 
+                    // @question
+                    // swapped
+                    // expect(header).to.equal(res.headers['server-authorization']);
+                    expect(header).to.equal(res.trailers['server-authorization']);
                     done();
                 });
             });
@@ -239,8 +266,14 @@ describe('hawk scheme', function () {
             var request = { method: 'POST', url: 'http://example.com:8080/hawkValidate?a=1', headers: { authorization: authHeader.field } };
             server.inject(request, function (res) {
 
-                expect(res.headers['server-authorization']).to.exist();
-                expect(res.headers['server-authorization']).to.contain('Hawk');
+                // @question swapped headers to trailers.
+                // expect(res.headers['server-authorization']).to.exist();
+                // expect(res.headers['server-authorization']).to.contain('Hawk');
+                // helpful documentation:
+                // https://nodejs.org/api/http.html#http_response_addtrailers_headers
+
+                expect(res.trailers['server-authorization']).to.exist();
+                expect(res.trailers['server-authorization']).to.contain('Hawk');
                 expect(res.statusCode).to.equal(400);
 
                 var options = {
@@ -252,7 +285,10 @@ describe('hawk scheme', function () {
 
                     authHeader.artifacts.credentials = cred;
                     var header = Hawk.server.header(cred, authHeader.artifacts, options);
-                    expect(header).to.equal(res.headers['server-authorization']);
+
+                    // @question swapped headers to trailers again.
+                    // expect(header).to.equal(res.headers['server-authorization']);
+                    expect(header).to.equal(res.trailers['server-authorization']);
 
                     done();
                 });

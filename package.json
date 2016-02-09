@@ -12,23 +12,23 @@
     "bewit"
   ],
   "engines": {
-    "node": ">=0.10.33"
+    "node": ">=4.2.6"
   },
   "dependencies": {
-    "boom": "2.x.x",
-    "hoek": "2.x.x",
-    "hawk": "3.x.x"
+    "boom": "3.x.x",
+    "hoek": "3.x.x",
+    "hawk": "4.x.x"
   },
   "peerDependencies": {
-    "hapi": ">=8.x.x"
+    "hapi": ">=13.x.x"
   },
   "devDependencies": {
-    "code": "1.x.x",
-    "hapi": "8.x.x",
-    "lab": "6.x.x"
+    "code": "2.x.x",
+    "hapi": "13.x.x",
+    "lab": "8.x.x"
   },
   "scripts": {
-    "test": "lab -r console -t 100 -a code -L",
+    "test": "lab -r console -t 100 -a code -L -v",
     "test-cov-html": "lab -r html -o coverage.html -a code -L"
   },
   "license": "BSD-3-Clause"
