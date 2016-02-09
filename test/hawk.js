@@ -82,6 +82,8 @@ describe('hawk scheme', function () {
             var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: hawkHeader('john', '/hawk').field } };
             server.inject(request, function (res) {
 
+                // console.log('res.headers: ' + JSON.stringify(res.headers));
+                // console.log('res.trailers: ' + JSON.stringify(res.trailers));
                 expect(res.statusCode).to.equal(200);
                 expect(res.result).to.equal('Success');
                 done();
@@ -175,6 +177,7 @@ describe('hawk scheme', function () {
 
                 // @question trailers or headers.
                 // Original, expect(res.headers['server-authorization']).to.contain('Hawk');
+                // Before updating hapi and node res.headers would be set.  After upgrading only trailers is set.
 
                 expect(res.trailers['server-authorization']).to.contain('Hawk');
 
