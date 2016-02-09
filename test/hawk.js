@@ -82,8 +82,6 @@ describe('hawk scheme', function () {
             var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: hawkHeader('john', '/hawk').field } };
             server.inject(request, function (res) {
 
-                // console.log('res.headers: ' + JSON.stringify(res.headers));
-                // console.log('res.trailers: ' + JSON.stringify(res.trailers));
                 expect(res.statusCode).to.equal(200);
                 expect(res.result).to.equal('Success');
                 done();
@@ -117,7 +115,7 @@ describe('hawk scheme', function () {
         });
     });
 
-    it('includes authorization header in response when the response is a stream', function (done) {
+    it('includes authorization trailer in response when the response is a stream', function (done) {
 
         var hawkStreamHandler = function (request, reply) {
 
@@ -176,10 +174,6 @@ describe('hawk scheme', function () {
                 expect(res.statusCode).to.equal(200);
 
                 // @question trailers or headers.
-                // Original, expect(res.headers['server-authorization']).to.contain('Hawk');
-                // Before updating hapi and node res.headers would be set.  After upgrading only trailers is set.
-
-                console.log('-- RESPONSE v13 --' + JSON.stringify(res.headers));
 
                 expect(res.trailers['server-authorization']).to.contain('Hawk');
 
@@ -192,8 +186,6 @@ describe('hawk scheme', function () {
                     var header = Hawk.server.header(cred, authHeader.artifacts, options);
 
                     // @question trailers or headers.
-                    // swapped out headers for trailers and got test to pass.
-                    // expect(header).to.equal(res.headers['server-authorization']);
 
                     expect(header).to.equal(res.trailers['server-authorization']);
                     done();
@@ -202,7 +194,7 @@ describe('hawk scheme', function () {
         });
     });
 
-    it('includes valid authorization header in response when the response is text', function (done) {
+    it('includes valid authorization trailer in response when the response is text', function (done) {
 
         var server = new Hapi.Server();
         server.connection();
@@ -250,7 +242,7 @@ describe('hawk scheme', function () {
         });
     });
 
-    it('includes valid authorization header in response when the request fails validation', function (done) {
+    it('includes valid authorization trailer in response when the request fails validation', function (done) {
 
         var server = new Hapi.Server();
         server.connection();
@@ -272,10 +264,6 @@ describe('hawk scheme', function () {
             server.inject(request, function (res) {
 
                 // @question swapped headers to trailers.
-                // expect(res.headers['server-authorization']).to.exist();
-                // expect(res.headers['server-authorization']).to.contain('Hawk');
-                // helpful documentation:
-                // https://nodejs.org/api/http.html#http_response_addtrailers_headers
 
                 expect(res.trailers['server-authorization']).to.exist();
                 expect(res.trailers['server-authorization']).to.contain('Hawk');
