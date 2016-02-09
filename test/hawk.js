@@ -179,6 +179,8 @@ describe('hawk scheme', function () {
                 // Original, expect(res.headers['server-authorization']).to.contain('Hawk');
                 // Before updating hapi and node res.headers would be set.  After upgrading only trailers is set.
 
+                console.log('-- RESPONSE v13 --' + JSON.stringify(res.headers));
+
                 expect(res.trailers['server-authorization']).to.contain('Hawk');
 
                 var options = {
