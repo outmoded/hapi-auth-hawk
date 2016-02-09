@@ -12,7 +12,7 @@
     "bewit"
   ],
   "engines": {
-    "node": ">=4.2.6"
+    "node": ">=4.0.0"
   },
   "dependencies": {
     "boom": "3.x.x",
