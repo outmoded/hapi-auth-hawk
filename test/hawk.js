@@ -80,7 +80,7 @@ describe('hawk scheme', () => {
                 server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
                 server.route({
                     method: 'POST', path: '/hawk',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -108,7 +108,7 @@ describe('hawk scheme', () => {
                 server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
                 server.route({
                     method: 'POST', path: '/hawkOptional',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -140,8 +140,6 @@ describe('hawk scheme', () => {
 
                 TestStream.prototype._read = function (size) {
 
-                    const self = this;
-
                     if (this.isDone) {
                         return;
                     }
@@ -149,12 +147,12 @@ describe('hawk scheme', () => {
 
                     setTimeout(() => {
 
-                        self.push('hi');
+                        this.push('hi');
                     }, 2);
 
                     setTimeout(() => {
 
-                        self.push(null);
+                        this.push(null);
                     }, 5);
                 };
 
@@ -215,7 +213,7 @@ describe('hawk scheme', () => {
                 server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
                 server.route({
                     method: 'POST', path: '/hawk',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -263,7 +261,7 @@ describe('hawk scheme', () => {
                 server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
                 server.route({
                     method: 'POST', path: '/hawkValidate',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -293,7 +291,6 @@ describe('hawk scheme', () => {
                         authHeader.artifacts.credentials = cred;
                         const header = Hawk.server.header(cred, authHeader.artifacts, options);
 
-                        // expect(header).to.equal(res.headers['server-authorization']);
                         expect(header).to.equal(res.trailers['server-authorization']);
 
                         server.stop(done);
@@ -313,7 +310,7 @@ describe('hawk scheme', () => {
                 server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
                 server.route({
                     method: 'POST', path: '/hawkError',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply(new Error());
                     },
@@ -342,7 +339,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawk',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -370,7 +367,7 @@ describe('hawk scheme', () => {
                 server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
                 server.route({
                     method: 'POST', path: '/hawk',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -399,7 +396,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawk',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -428,7 +425,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkScope',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -463,7 +460,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawk',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -492,7 +489,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkPayload',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -530,7 +527,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkPayload',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -563,7 +560,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkPayload',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -596,7 +593,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkPayloadOptional',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -629,7 +626,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkPayloadOptional',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -661,7 +658,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkPayloadOptional',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -693,7 +690,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkPayloadNone',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -725,7 +722,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkPayloadNone',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -758,7 +755,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkOptionalPayload',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -790,7 +787,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkOptionalPayload',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
@@ -823,7 +820,7 @@ describe('hawk scheme', () => {
                 server.route({
                     method: 'POST',
                     path: '/hawkPayload',
-                    handler: (request, reply) => {
+                    handler(request, reply) {
 
                         reply('Success');
                     },
