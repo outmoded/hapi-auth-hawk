@@ -218,6 +218,37 @@ describe('hawk scheme', function () {
         });
     });
 
+    it('removes the content-length header when switching to chunked transfer encoding', function (done) {
+
+        var server = new Hapi.Server();
+        server.connection();
+        server.register(require('../'), function (err) {
+
+            expect(err).to.not.exist();
+            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+            server.route({
+                method: 'POST', path: '/hawk',
+                handler: function (request, reply) {
+
+                    reply('Success');
+                },
+                config: { auth: 'default'  }
+            });
+
+            var authHeader = hawkHeader('john', '/hawk');
+            var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: authHeader.field } };
+
+            server.inject(request, function (res) {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.headers['transfer-encoding']).to.equal('chunked');
+                expect(res.headers['content-length']).to.not.exist();
+
+                done();
+            });
+        });
+    });
+
     it('includes valid authorization header in response when the request fails validation', function (done) {
 
         var server = new Hapi.Server();
