@@ -181,8 +181,11 @@ describe('hawk scheme', () => {
 
                     expect(res.statusCode).to.equal(200);
 
+                    // We must not send a content-length header alongside transfer-encoding.
 
                     expect(res.trailers['server-authorization']).to.contain('Hawk');
+                    expect(res.headers['transfer-encoding']).to.equal('chunked');
+                    expect(res.headers['content-length']).to.not.exist();
 
                     const options = {
                         payload: res.payload
@@ -299,11 +302,12 @@ describe('hawk scheme', () => {
         });
     });
 
-    it('removes the content-length header when switching to chunked transfer encoding', function (done) {
+    it('removes the content-length header when switching to chunked transfer encoding', (done) => {
 
-        var server = new Hapi.Server();
+        const server = new Hapi.Server();
         server.connection();
-        server.register(require('../'), function (err) {
+
+        server.register(require('../'), (err) => {
 
             expect(err).to.not.exist();
             server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
@@ -316,39 +320,20 @@ describe('hawk scheme', () => {
                 config: { auth: 'default'  }
             });
 
-            var authHeader = hawkHeader('john', '/hawk');
-            var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: authHeader.field } };
+            const authHeader = hawkHeader('john', '/hawk');
+            const request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: authHeader.field } };
 
-            server.inject(request, function (res) {
+            server.inject(request, (res) => {
 
-                const authHeader = hawkHeader('john', '/hawkValidate?a=1');
-                const request = { method: 'POST', url: 'http://example.com:8080/hawkValidate?a=1', headers: { authorization: authHeader.field } };
-                server.inject(request, (res) => {
+                // shot v3 trailers goes to trailers but v1 goes to headers.
+                // expect(res.headers['server-authorization']).to.contain('Hawk');
 
-                    // shot v3 trailers goes to trailers but v1 goes to headers.
-                    // expect(res.headers['server-authorization']).to.contain('Hawk');
+                expect(res.statusCode).to.equal(200);
+                expect(res.trailers['server-authorization']).to.contain('Hawk');
+                expect(res.headers['transfer-encoding']).to.equal('chunked');
+                expect(res.headers['content-length']).to.not.exist();
 
-                    expect(res.trailers['server-authorization']).to.exist();
-                    expect(res.trailers['server-authorization']).to.contain('Hawk');
-                    expect(res.statusCode).to.equal(400);
-
-                    const options = {
-                        payload: res.payload,
-                        contentType: res.headers['content-type']
-                    };
-
-                    getCredentials('john', (err, cred) => {
-
-                        expect(err).to.not.exist();
-
-                        authHeader.artifacts.credentials = cred;
-                        const header = Hawk.server.header(cred, authHeader.artifacts, options);
-
-                        expect(header).to.equal(res.trailers['server-authorization']);
-
-                        server.stop(done);
-                    });
-                });
+                server.stop(done);
             });
         });
     });
