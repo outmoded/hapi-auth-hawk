@@ -75,7 +75,7 @@ var getCredentials = function (id, callback) {
     return callback(null, credentials[id]);
 };
 
-server.register('hapi-auth-hawk', function (err) {
+server.register(require('hapi-auth-hawk'), function (err) {
 
     server.auth.strategy('default', 'bewit', { getCredentialsFunc: getCredentials });
 });
