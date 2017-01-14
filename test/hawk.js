@@ -44,7 +44,7 @@ describe('hawk scheme', function () {
         }
     };
 
-    var getCredentials = function (id, callback) {
+    var getCredentials = function (id, data, callback) {
 
         if (credentials[id]) {
             return callback(credentials[id].err, credentials[id].cred);
@@ -86,6 +86,29 @@ describe('hawk scheme', function () {
             });
         });
     });
+
+    it('returns a reply on successful auth, using request passthru', function (done) {
+
+        var server = new Hapi.Server();
+        server.pack.register(require('../'), function (err) {
+
+            expect(err).to.not.exist;
+            server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials, passthru: true });
+            server.route({ method: 'POST', path: '/hawk',
+                handler: function (request, reply) { reply('Success'); },
+                config: { auth: 'default' } }
+            );
+
+            var request = { method: 'POST', url: 'http://example.com:8080/hawk', headers: { authorization: hawkHeader('john', '/hawk').field } };
+            server.inject(request, function (res) {
+
+                expect(res.statusCode).to.equal(200);
+                expect(res.result).to.equal('Success');
+                done();
+            });
+        });
+    });
+
 
     it('returns a reply on failed optional auth', function (done) {
 
@@ -167,7 +190,7 @@ describe('hawk scheme', function () {
                     payload: res.payload
                 };
 
-                getCredentials('john', function (err, cred) {
+                getCredentials('john', null, function (err, cred) {
 
                     var header = Hawk.server.header(cred, authHeader.artifacts, options);
                     expect(header).to.equal(res.headers['server-authorization']);
@@ -207,7 +230,7 @@ describe('hawk scheme', function () {
                     contentType: res.headers['content-type']
                 };
 
-                getCredentials('john', function (err, cred) {
+                getCredentials('john', null, function (err, cred) {
 
                     var header = Hawk.server.header(cred, authHeader.artifacts, options);
                     expect(header).to.equal(res.headers['server-authorization']);
@@ -279,7 +302,7 @@ describe('hawk scheme', function () {
                     contentType: res.headers['content-type']
                 };
 
-                getCredentials('john', function (err, cred) {
+                getCredentials('john', null, function (err, cred) {
 
                     authHeader.artifacts.credentials = cred;
                     var header = Hawk.server.header(cred, authHeader.artifacts, options);
