@@ -12,15 +12,12 @@
     "bewit"
   ],
   "engines": {
-    "node": ">=0.10.33"
+    "node": ">=6"
   },
   "dependencies": {
-    "boom": "2.x.x",
-    "hoek": "2.x.x",
-    "hawk": "3.x.x"
-  },
-  "peerDependencies": {
-    "hapi": ">=8.x.x"
+    "boom": "^5.2.0",
+    "hawk": "^6.0.2",
+    "hoek": "^4.2.1"
   },
   "devDependencies": {
     "code": "1.x.x",
