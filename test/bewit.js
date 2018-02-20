@@ -1,50 +1,54 @@
+'use strict';
+
 // Load modules
 
-var Boom = require('boom');
-var Code = require('code');
-var Hapi = require('hapi');
-var Hawk = require('hawk');
-var Lab = require('lab');
+const Boom = require('boom');
+const Code = require('code');
+const Hapi = require('hapi');
+const Hawk = require('hawk');
+const Lab = require('lab');
 
 
 // Declare internals
 
-var internals = {};
+const internals = {};
 
 
 // Test shortcuts
 
-var lab = exports.lab = Lab.script();
-var describe = lab.describe;
-var it = lab.it;
-var before = lab.before;
-var expect = Code.expect;
+const lab = exports.lab = Lab.script();
+const describe = lab.describe;
+const it = lab.it;
+const before = lab.before;
+const expect = Code.expect;
 
 
-describe('bewit scheme', function () {
+describe('bewit scheme', () => {
 
-    var credentials = {
-        'john': {
+    const credentials = {
+        john: {
             cred: {
                 id: 'john',
                 key: 'werxhqb98rpaxn39848xrunpaw3489ruxnpa98w4rxn',
                 algorithm: 'sha256'
             }
         },
-        'jane': {
+        jane: {
             err: Boom.internal('boom')
         }
     };
 
-    var getCredentials = function (id, callback) {
+    const getCredentialsFunc = function (id) {
 
         if (credentials[id]) {
-            return callback(credentials[id].err, credentials[id].cred);
+            if (credentials[id].err) {
+                throw credentials[id].err;
+            }
+            return credentials[id].cred;
         }
-        return callback(null, null);
     };
 
-    var getBewit = function (id, path) {
+    const getBewit = function (id, path) {
 
         if (credentials[id] && credentials[id].cred) {
             return Hawk.uri.getBewit('http://example.com:8080' + path, { credentials: credentials[id].cred, ttlSec: 60 });
@@ -52,154 +56,130 @@ describe('bewit scheme', function () {
         return '';
     };
 
-    var bewitHandler = function (request, reply) {
+    const bewitHandler = function (request, h) {
 
-        reply('Success');
+        return 'Success';
     };
 
-    var server = new Hapi.Server();
-    server.connection();
-    before(function (done) {
+    let server = Hapi.server();
 
-        server.register(require('../'), function (err) {
+    before(async () => {
 
-            expect(err).to.not.exist();
+        await server.register(require('../'));
 
-            server.auth.strategy('default', 'bewit', true, { getCredentialsFunc: getCredentials });
+        server.auth.strategy('default', 'bewit', { getCredentialsFunc });
 
-            server.route([
-                { method: 'GET', path: '/bewit', handler: bewitHandler, config: { auth: 'default' } },
-                { method: 'GET', path: '/bewitOptional', handler: bewitHandler, config: { auth: { mode: 'optional', strategy: 'default' } } },
-                { method: 'GET', path: '/bewitScope', handler: bewitHandler, config: { auth: { scope: 'x', strategy: 'default' } } }
-            ]);
-
-            done();
-        });
+        server.route([
+            { method: 'GET', path: '/bewit', handler: bewitHandler, options: { auth: 'default' } },
+            { method: 'GET', path: '/bewitOptional', handler: bewitHandler, options: { auth: { mode: 'optional', strategy: 'default' } } },
+            { method: 'GET', path: '/bewitScope', handler: bewitHandler, options: { auth: { scope: 'x', strategy: 'default' } } }
+        ]);
     });
 
-    it('returns a reply on successful auth', function (done) {
+    it('returns a reply on successful auth', async () => {
 
-        var bewit = getBewit('john', '/bewit');
-        server.inject('http://example.com:8080/bewit?bewit=' + bewit, function (res) {
+        const bewit = getBewit('john', '/bewit');
+        const res = await server.inject('http://example.com:8080/bewit?bewit=' + bewit);
 
-            expect(res.result).to.equal('Success');
-            done();
-        });
+        expect(res.result).to.equal('Success');
     });
 
-    it('returns an error reply on failed optional auth', function (done) {
+    it('returns an error reply on failed optional auth', async () => {
 
-        var bewit = getBewit('john', '/abc');
-        server.inject('http://example.com:8080/bewitOptional?bewit=' + bewit, function (res) {
+        const bewit = getBewit('john', '/abc');
+        const res = await server.inject('http://example.com:8080/bewitOptional?bewit=' + bewit);
 
-            expect(res.statusCode).to.equal(401);
-            done();
-        });
+        expect(res.statusCode).to.equal(401);
     });
 
-    it('returns an error on bad bewit', function (done) {
+    it('returns an error on bad bewit', async () => {
 
-        var bewit = getBewit('john', '/abc');
-        server.inject('http://example.com:8080/bewit?bewit=' + bewit, function (res) {
+        const bewit = getBewit('john', '/abc');
+        const res = await server.inject('http://example.com:8080/bewit?bewit=' + bewit);
 
-            expect(res.statusCode).to.equal(401);
-            done();
-        });
+        expect(res.statusCode).to.equal(401);
     });
 
-    it('returns an error on bad bewit format', function (done) {
+    it('returns an error on bad bewit format', async () => {
 
-        server.inject('http://example.com:8080/bewit?bewit=junk', function (res) {
+        const res = await server.inject('http://example.com:8080/bewit?bewit=junk');
 
-            expect(res.statusCode).to.equal(400);
-            done();
-        });
+        expect(res.statusCode).to.equal(400);
     });
 
-    it('returns an error on insufficient scope', function (done) {
+    it('returns an error on insufficient scope', async () => {
 
-        var bewit = getBewit('john', '/bewitScope');
-        server.inject('http://example.com:8080/bewitScope?bewit=' + bewit, function (res) {
+        const bewit = getBewit('john', '/bewitScope');
+        const res = await server.inject('http://example.com:8080/bewitScope?bewit=' + bewit);
 
-            expect(res.statusCode).to.equal(403);
-            done();
-        });
+        expect(res.statusCode).to.equal(403);
     });
 
-    it('returns a reply on successful auth when using a custom host header key', function (done) {
+    it('returns a reply on successful auth when using a custom host header key', async () => {
 
-        var bewit = getBewit('john', '/bewit');
-        var request = { method: 'GET', url: '/bewit?bewit=' + bewit, headers: { custom: 'example.com:8080' } };
+        const bewit = getBewit('john', '/bewit');
+        const request = { method: 'GET', url: '/bewit?bewit=' + bewit, headers: { custom: 'example.com:8080' } };
 
         server = new Hapi.Server();
-        server.connection();
-        server.register(require('../'), function (err) {
+        await server.register(require('../'));
 
-            expect(err).to.not.exist();
-
-            server.auth.strategy('default', 'bewit', {
-                getCredentialsFunc: getCredentials,
-                hawk: {
-                    hostHeaderName: 'custom'
-                }
-            });
-
-            server.route({ method: 'GET', path: '/bewit', handler: bewitHandler, config: { auth: 'default' } });
-
-            server.inject(request, function (res) {
-
-                expect(res.statusCode).to.equal(200);
-                expect(res.result).to.equal('Success');
-                done();
-            });
+        server.auth.strategy('default', 'bewit', {
+            getCredentialsFunc,
+            hawk: {
+                hostHeaderName: 'custom'
+            }
         });
+
+        server.route({ method: 'GET', path: '/bewit', handler: bewitHandler, options: { auth: 'default' } });
+
+        const res = await server.inject(request);
+
+        expect(res.statusCode).to.equal(200);
+        expect(res.result).to.equal('Success');
     });
 
-    it('cannot add a route that has payload validation required', function (done) {
+    it('cannot add a route that has payload validation required', () => {
 
-        var fn = function () {
+        const fn = function () {
 
             server.route({ method: 'POST',
                 path: '/bewitPayload',
                 handler: bewitHandler,
-                config: { auth: { mode: 'required', strategy: 'default', payload: 'required' },
+                options: { auth: { mode: 'required', strategy: 'default', payload: 'required' },
                     payload: { output: 'stream', parse: false } }
             });
         };
 
-        expect(fn).to.throw('Payload validation can only be required when all strategies support it in path: /bewitPayload');
-        done();
+        expect(fn).to.throw('Payload validation can only be required when all strategies support it in /bewitPayload');
     });
 
-    it('cannot add a route that has payload validation as optional', function (done) {
+    it('cannot add a route that has payload validation as optional', () => {
 
-        var fn = function () {
+        const fn = function () {
 
             server.route({ method: 'POST',
                 path: '/bewitPayload',
                 handler: bewitHandler,
-                config: { auth: { mode: 'required', strategy: 'default', payload: 'optional' },
+                options: { auth: { mode: 'required', strategy: 'default', payload: 'optional' },
                     payload: { output: 'stream', parse: false } }
             });
         };
 
-        expect(fn).to.throw('Payload authentication requires at least one strategy with payload support in path: /bewitPayload');
-        done();
+        expect(fn).to.throw('Payload authentication requires at least one strategy with payload support in /bewitPayload');
     });
 
-    it('can add a route that has payload validation as none', function (done) {
+    it('can add a route that has payload validation as none', () => {
 
-        var fn = function () {
+        const fn = function () {
 
             server.route({ method: 'POST',
                 path: '/bewitPayload',
                 handler: bewitHandler,
-                config: { auth: { mode: 'required', strategy: 'default', payload: false },
+                options: { auth: { mode: 'required', strategy: 'default', payload: false },
                     payload: { output: 'stream', parse: false } }
             });
         };
 
         expect(fn).to.not.throw();
-        done();
     });
 });

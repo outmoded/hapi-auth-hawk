@@ -11,35 +11,59 @@ Lead Maintainer: [Danny Coates](https://github.com/dannycoates)
 [Hawk authentication](https://github.com/hueniverse/hawk) provides a holder-of-key authentication scheme. The scheme supports payload
 authentication. The scheme requires the following options:
 
-- `getCredentialsFunc` - credential lookup function with the signature `function(id, callback)` where:
+- `getCredentialsFunc` - credential lookup function with the signature `[async] function(id)` where:
     - `id` - the Hawk credentials identifier.
-    - `callback` - the callback function with signature `function(err, credentials)` where:
-        - `err` - an internal error.
-        - `credentials` - a credentials object passed back to the application in `request.auth.credentials`. Return `null` or `undefined` to
+    - _throws_ an internal error.
+    - _returns_ `{ credentials }` object where:
+        - `credentials` a credentials object passed back to the application in `request.auth.credentials`. Set to be `null` or `undefined` to
           indicate unknown credentials (which is not considered an error state).
 - `hawk` - optional protocol options passed to `Hawk.server.authenticate()`.
 
 ```javascript
-var Hapi = require('hapi');
-var HapiHawk = require('hapi-auth-hawk');
-var server = new Hapi.Server();
-server.connection();
+const Hapi = require('hapi');
 
-var credentials = {
+const credentials = {
     d74s3nz2873n: {
         key: 'werxhqb98rpaxn39848xrunpaw3489ruxnpa98w4rxn',
         algorithm: 'sha256'
     }
-}
-
-var getCredentials = function (id, callback) {
-
-    return callback(null, credentials[id]);
 };
 
-server.register(HapiHawk, function (err) {
+const getCredentialsFunc = function (id) {
 
-    server.auth.strategy('default', 'hawk', { getCredentialsFunc: getCredentials });
+    return credentials[id];
+};
+
+const start = async () => {
+
+    const server = Hapi.server({ port: 4000 });
+
+    await server.register(require('hapi-auth-hawk'));
+
+    server.auth.strategy('default', 'hawk', { getCredentialsFunc });
+    server.auth.default('default');
+
+    server.route({
+        method: 'GET',
+        path: '/',
+        handler: function (request, h) {
+
+            return 'welcome';
+        }
+    });
+
+    await server.start();
+
+    console.log('Server started listening on %s', server.info.uri);
+};
+
+start();
+
+// Ensure process exits on unhandled rejection
+
+process.on('unhandledRejection', (err) => {
+
+    throw err;
 });
 
 ```
@@ -50,49 +74,74 @@ server.register(HapiHawk, function (err) {
 including a token (bewit) in the request query, issued by an authorized party. Bewit is a subset of the Hawk protocol. The scheme can only
 be used with 'GET' requests and requires the following options:
 
-- `getCredentialsFunc` - credential lookup function with the signature `function(id, callback)` where:
+- `getCredentialsFunc` - credential lookup function with the signature `async function(id)` where:
     - `id` - the Hawk credentials identifier.
-    - `callback` - the callback function with signature `function(err, credentials)` where:
-        - `err` - an internal error.
-        - `credentials` - a credentials object passed back to the application in `request.auth.credentials`. Return `null` or `undefined` to
-          indicate unknown credentials (which is not considered an error state).
+    - _throws_ an internal error.
+    - _returns_ `{ credentials }` object where:
+        - `credentials` a credentials object passed back to the application in `request.auth.credentials`. Set to be `null` or `undefined` to
+      indicate unknown credentials (which is not considered an error state).
 - `hawk` - optional protocol options passed to `Hawk.server.authenticateBewit()`.
 
 ```javascript
-var Hapi = require('hapi');
-var server = new Hapi.Server();
-server.connection();
+const Hapi = require('hapi');
 
-var credentials = {
+const credentials = {
     d74s3nz2873n: {
         key: 'werxhqb98rpaxn39848xrunpaw3489ruxnpa98w4rxn',
         algorithm: 'sha256'
     }
-}
-
-var getCredentials = function (id, callback) {
-
-    return callback(null, credentials[id]);
 };
 
-server.register(require('hapi-auth-hawk'), function (err) {
+const getCredentialsFunc = function (id) {
 
-    server.auth.strategy('default', 'bewit', { getCredentialsFunc: getCredentials });
+    return credentials[id];
+};
+
+const start = async () => {
+
+    const server = Hapi.server({ port: 4000 });
+
+    await server.register(require('.'));
+
+    server.auth.strategy('default', 'bewit', { getCredentialsFunc });
+    server.auth.default('default');
+
+    server.route({
+        method: 'GET',
+        path: '/',
+        handler: function (request, h) {
+
+            return 'welcome';
+        }
+    });
+
+    await server.start();
+
+    console.log('Server started listening on %s', server.info.uri);
+};
+
+start();
+
+// Ensure process exits on unhandled rejection
+
+process.on('unhandledRejection', (err) => {
+
+    throw err;
 });
 ```
 
 To send an authenticated Bewit request, the URI must contain the `'bewit'` query parameter which can be generated using the Hawk module:
 
 ```javascript
-var Hawk = require('hawk');
+const Hawk = require('hawk');
 
-var credentials = {
+const credentials = {
     id: 'd74s3nz2873n',
     key: 'werxhqb98rpaxn39848xrunpaw3489ruxnpa98w4rxn',
     algorithm: 'sha256'
 };
 
-var uri = 'http://example.com:8080/endpoint';
-var bewit = Hawk.client.getBewit(uri, { credentials: credentials, ttlSec: 60 });
+let uri = 'http://example.com:8080/endpoint';
+const bewit = Hawk.client.getBewit(uri, { credentials: credentials, ttlSec: 60 });
 uri += '?bewit=' + bewit;
 ```
