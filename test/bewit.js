@@ -1,7 +1,5 @@
 'use strict';
 
-// Load modules
-
 const Boom = require('boom');
 const Code = require('code');
 const Hapi = require('hapi');
@@ -9,17 +7,10 @@ const Hawk = require('hawk');
 const Lab = require('lab');
 
 
-// Declare internals
-
 const internals = {};
 
 
-// Test shortcuts
-
-const lab = exports.lab = Lab.script();
-const describe = lab.describe;
-const it = lab.it;
-const before = lab.before;
+const { it, describe, before } = exports.lab = Lab.script();
 const expect = Code.expect;
 
 
@@ -44,6 +35,7 @@ describe('bewit scheme', () => {
             if (credentials[id].err) {
                 throw credentials[id].err;
             }
+
             return credentials[id].cred;
         }
     };
@@ -53,6 +45,7 @@ describe('bewit scheme', () => {
         if (credentials[id] && credentials[id].cred) {
             return Hawk.uri.getBewit('http://example.com:8080' + path, { credentials: credentials[id].cred, ttlSec: 60 });
         }
+
         return '';
     };
 

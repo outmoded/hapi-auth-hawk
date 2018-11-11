@@ -4,7 +4,7 @@
 
 [![Build Status](https://secure.travis-ci.org/hapijs/hapi-auth-hawk.png)](http://travis-ci.org/hapijs/hapi-auth-hawk)
 
-Lead Maintainer: [Matt Harrison](https://github.com/mtharrison)
+Lead Maintainer: [Eran Hammer](https://github.com/hueniverse)
 
 #### Hawk authentication
 

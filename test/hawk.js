@@ -1,26 +1,18 @@
 'use strict';
 
-// Load modules
-
 const Stream = require('stream');
+
 const Boom = require('boom');
 const Code = require('code');
 const Hapi = require('hapi');
 const Hawk = require('hawk');
-const Hoek = require('hoek');
 const Lab = require('lab');
 
-
-// Declare internals
 
 const internals = {};
 
 
-// Test shortcuts
-
-const lab = exports.lab = Lab.script();
-const describe = lab.describe;
-const it = lab.it;
+const { it, describe } = exports.lab = Lab.script();
 const expect = Code.expect;
 
 
@@ -52,6 +44,7 @@ describe('hawk scheme', () => {
             if (credentials[id].err) {
                 throw credentials[id].err;
             }
+
             return credentials[id].cred;
         }
     };
@@ -61,6 +54,7 @@ describe('hawk scheme', () => {
         if (credentials[id] && credentials[id].cred) {
             return Hawk.client.header('http://example.com:8080' + path, 'POST', { credentials: credentials[id].cred });
         }
+
         return '';
     };
 
@@ -113,31 +107,28 @@ describe('hawk scheme', () => {
 
         const hawkStreamHandler = function (request, h) {
 
-            const TestStream = function () {
+            const TestStream = class extends Stream.Readable {
 
-                Stream.Readable.call(this);
-            };
+                _read(size) {
 
-            Hoek.inherits(TestStream, Stream.Readable);
+                    const self = this;
 
-            TestStream.prototype._read = function (size) {
+                    if (this.isDone) {
+                        return;
+                    }
 
-                const self = this;
+                    this.isDone = true;
 
-                if (this.isDone) {
-                    return;
+                    setTimeout(() => {
+
+                        self.push('hi');
+                    }, 2);
+
+                    setTimeout(() => {
+
+                        self.push(null);
+                    }, 5);
                 }
-                this.isDone = true;
-
-                setTimeout(() => {
-
-                    self.push('hi');
-                }, 2);
-
-                setTimeout(() => {
-
-                    self.push(null);
-                }, 5);
             };
 
             const stream = new TestStream();
