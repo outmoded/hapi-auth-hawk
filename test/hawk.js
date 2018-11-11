@@ -171,7 +171,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: 'default'  }
+            options: { auth: 'default' }
         });
 
         const authHeader = hawkHeader('john', '/hawk');
@@ -206,7 +206,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: 'default'  }
+            options: { auth: 'default' }
         });
 
         const authHeader = hawkHeader('john', '/hawk');
@@ -360,7 +360,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { scope: 'x', strategy: 'default'  } }
+            options: { auth: { scope: 'x', strategy: 'default' } }
         });
 
         const request = { method: 'POST', url: 'http://example.com:8080/hawkScope', payload: '{}', headers: { authorization: hawkHeader('john', '/hawkScope').header } };
@@ -411,7 +411,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            options: { auth: { mode: 'required', payload: 'required', strategy: 'default' }, payload: { override: 'text/plain' } }
         });
 
         const payload = 'application text formatted payload';
@@ -443,7 +443,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            options: { auth: { mode: 'required', payload: 'required', strategy: 'default' }, payload: { override: 'text/plain' } }
         });
 
         let payload = 'Here is my payload';
@@ -470,7 +470,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            options: { auth: { mode: 'required', payload: 'required', strategy: 'default' }, payload: { override: 'text/plain' } }
         });
 
         let payload = 'Here is my payload';
@@ -524,7 +524,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { mode: 'required', payload: 'optional', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            options: { auth: { mode: 'required', payload: 'optional', strategy: 'default' }, payload: { override: 'text/plain' } }
         });
 
         const payload = 'Here is my payload';
@@ -550,7 +550,8 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { mode: 'required', payload: 'optional', strategy: 'default'  }, payload: { override: 'text/plain' } } }
+            options: { auth: { mode: 'required', payload: 'optional', strategy: 'default' }, payload: { override: 'text/plain' } }
+        }
         );
 
         const payload = 'Here is my payload';
@@ -576,7 +577,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } }
+            options: { auth: { mode: 'required', payload: false, strategy: 'default' }, payload: { override: 'text/plain' } }
         });
 
         const payload = 'Here is my payload';
@@ -602,7 +603,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { mode: 'required', payload: false, strategy: 'default'  }, payload: { override: 'text/plain' } }
+            options: { auth: { mode: 'required', payload: false, strategy: 'default' }, payload: { override: 'text/plain' } }
         });
 
         let payload = 'Here is my payload';
@@ -625,11 +626,11 @@ describe('hawk scheme', () => {
         server.route({
             method: 'POST',
             path: '/hawkOptionalPayload',
-            handler: function (request, h) {
-
-                return 'Success';
-            },
-            options: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            config: {
+                handler: (request, h) => 'Success',
+                auth: { mode: 'optional', payload: 'required', strategy: 'default' },
+                payload: { override: 'text/plain' }
+            }
         });
 
         const payload = 'Here is my payload';
@@ -655,7 +656,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { mode: 'optional', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            options: { auth: { mode: 'optional', payload: 'required', strategy: 'default' }, payload: { override: 'text/plain' } }
         });
 
         let payload = 'Here is my payload';
@@ -682,7 +683,7 @@ describe('hawk scheme', () => {
 
                 return 'Success';
             },
-            options: { auth: { mode: 'required', payload: 'required', strategy: 'default'  }, payload: { override: 'text/plain' } }
+            options: { auth: { mode: 'required', payload: 'required', strategy: 'default' }, payload: { override: 'text/plain' } }
         });
 
         const payload = 'Here is my payload';
